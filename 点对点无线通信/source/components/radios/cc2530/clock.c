@@ -33,22 +33,27 @@
 ******************************************************************************/
 void clockSetMainSrc(uint8 source)
 {
+    // 32KµÄ¾§ÕñÉèÖÃÎª RCOSC
     register uint8 osc32k_bm = CLKCONCMD & CLKCON_OSC32K_BM;
 
     // Source can have the following values:
     // CLOCK_SRC_XOSC   0x00  High speed Crystal Oscillator (XOSC)
     // CLOCK_SRC_HFRC   0x01  Low power RC Oscillator (HFRC)
     
+    // 2430ÖÐ¿ªÆô16MºÍ32M¾§Õñ£¬TiÂÛÌ³ÉÏµÄ½âÊÍÊÇ2430µÄÒÆÖ²´úÂë£¬
+    // Õâ²¿·ÖÔÚ2430ÖÐÊÇÊÖ¶¯À´¿ØÖÆ£¬2530ÖÐÒÑ¾­±ä³É×Ô¶¯¿ØÖÆ£»
     SLEEPCMD &= ~SLEEP_OSC_PD_BM;       // power up both oscillators
     while (!CC2530_IS_HFRC_STABLE() || ((SLEEPSTA & SLEEP_OSC_PD_BM)!=0));// wait until the oscillator is stable
     NOP();
 
+    // ÉèÖÃÖ÷Ê±ÖÓÔ´£¬²¢½« TICKSPDºÍ CLKSPD ¸úÊ±ÖÓÔ´Ò»ÖÂ£»
     if (source == CLOCK_SRC_HFRC){
         CLKCONCMD = (osc32k_bm | CLKCON_OSC_BM | TICKSPD_DIV_2 | CLKCON_CLKSPD_BM);
     }
     else if (source == CLOCK_SRC_XOSC){
         CLKCONCMD = (osc32k_bm | TICKSPD_DIV_1);
     }
+    // Í¨¹ý²éÑ¯CLKCONSTAÀ´È·¶¨ÐÞ¸ÄºóµÄÊ±ÖÓÔ´ÊÇ·ñ´ïµ½ÎÈ¶¨£»
     CC2530_WAIT_CLK_UPDATE();
     SLEEPCMD |= SLEEP_OSC_PD_BM;        // power down the unused oscillator
 }
@@ -67,17 +72,21 @@ uint8 clockSelect32k(uint8 source)
 {
     // System clock source must be high frequency RC oscillator before
     // changing 32K source. 
+    // ÔÚ¸Ä±ä32KÊ±ÖÓÔ´Ö®Ç° 16M RCOSC±ØÐë´¦ÓÚ»î¶¯×´Ì¬£»
+    // ×÷ÎªÐ¾Æ¬³õÊ¼»¯¿ªÊ¼£¬É¾µôÊÇ¿ÉÒÔµÄ£¬ÕâÑù´¦ÀíÎªÁË´úÂëµÄÐÔÄÜ£¿Ä£·Â°É£º£©
     if( !(CLKCONSTA & CLKCON_OSC_BM) )
       return FAILED;
     
+    // Ñ¡Ôñ²»Í¬µÄ32KÊ±ÖÓÔ´
     if (source == CLOCK_32K_XTAL){
         CLKCONCMD &= ~CLKCON_OSC32K_BM;
     }
     else if (source == CLOCK_32K_RCOSC){
         CLKCONCMD |= CLKCON_OSC32K_BM;
     }
-    CC2530_WAIT_CLK_UPDATE();
     
+    // Í¨¹ý²éÑ¯CLKCONSTAÀ´È·¶¨ÐÞ¸ÄºóµÄÊ±ÖÓÔ´ÊÇ·ñ´ïµ½ÎÈ¶¨£»
+    CC2530_WAIT_CLK_UPDATE();
     return SUCCESS;
 }
 
@@ -98,7 +107,7 @@ uint8 clockSelect32k(uint8 source)
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,

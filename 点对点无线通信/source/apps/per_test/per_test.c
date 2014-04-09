@@ -80,25 +80,30 @@ static void appReceiver()
     uint8 resetStats=FALSE;
 
     /* 初始化Basic RF */
-    basicRfConfig.myAddr = RX_ADDR;
-    if(basicRfInit(&basicRfConfig)==FAILED) 
+    // basicRfConfig的定义：static basicRfCfg_t basicRfConfig;
+    // basicRfCfg_t 这个类型的结构体具体啥用不清楚
+    basicRfConfig.myAddr = RX_ADDR;                   
+    if(basicRfInit(&basicRfConfig)==FAILED)           // 判断协议栈初始化是否成功
     {
         HAL_ASSERT(FALSE);
     }
-    basicRfReceiveOn();
+    basicRfReceiveOn();   // Turns on receiver on radio
 
     /* 主循环 */
     while (TRUE) 
     {
-        while(!basicRfPacketIsReady());  // 等待新的数据包
+        // 返回值一直为1，只有当检测到数据包时，才会置0，跳出死循环
+        while(!basicRfPacketIsReady());   // 等待新的数据包
         if(basicRfReceive((uint8*)&rxPacket, MAX_PAYLOAD_LENGTH, &rssi)>0) 
         {
             halLedSet(1);  // 点亮LED1
-                              
+             
+            // rxPacket的定义：static perTestPacket_t rxPacket;
+            // perTestPacket_t：PER test packet format
             UINT32_NTOH(rxPacket.seqNumber);  // 改变接收序号的字节顺序
             segNumber = rxPacket.seqNumber;
                   
-            /* 若果统计被复位，设置期望收到的数据包序号为已经收到的数据包序号 */     
+            /* 如果统计被复位，设置期望收到的数据包序号为已经收到的数据包序号 */     
             if(resetStats)
             {
                 rxStats.expectedSeqNum = segNumber;   
@@ -106,7 +111,7 @@ static void appReceiver()
             }
               
             rxStats.rssiSum -= perRssiBuf[perRssiBufCounter];  // 从sum中减去旧的RSSI值
-            perRssiBuf[perRssiBufCounter] =  rssi;             // 存储新的RSSI值到环形缓冲区，之后它将被加入sum
+            perRssiBuf[perRssiBufCounter] =  rssi;  // 存储新的RSSI值到环形缓冲区，之后它将被加入sum
       
             rxStats.rssiSum += perRssiBuf[perRssiBufCounter];  // 增加新的RSSI值到sum
             if(++perRssiBufCounter == RSSI_AVG_WINDOW_SIZE) 
@@ -158,7 +163,9 @@ static void appTransmitter()
     uint8 n;
   
     /* 初始化Basic RF */
-    basicRfConfig.myAddr = TX_ADDR;
+    basicRfConfig.myAddr = TX_ADDR;     // 给节点地址赋值
+    
+    // 射频电路初始化函数，传入上述的参数配置结构体
     if(basicRfInit(&basicRfConfig)==FAILED) 
     {
       HAL_ASSERT(FALSE);
@@ -218,10 +225,24 @@ void main (void)
     appStarted = FALSE;        // 初始化启动标志位FALSE
           
     /* 初始化Basic RF */
+    // basicRfConfig 的定义：static basicRfCfg_t basicRfConfig;
+    // basicRfCfg_t 结构体为射频电路初始化相关的参数配置结构体,具体如下：
+    /*
+    typedef struct {
+        uint16 myAddr;        // 16位短地址（节点的地址），类似于局域网中的IP地址
+        uint16 panId;         // 节点的PAN ID，网络的ID号，可以理解成"局域网的外网IP地址"
+        uint8 channel;        // RF通道，必须在11-26之间
+        uint8 ackRequest;     // 目标确认就置 true
+        #ifdef SECURITY_CCM   // 是否加密，预定义里取消了加密
+        uint8* securityKey;
+        uint8* securityNonce;
+        #endif
+    } basicRfCfg_t;
+    */
     basicRfConfig.panId = PAN_ID;        // 初始化个域网ID
     basicRfConfig.ackRequest = FALSE;    // 不需要确认
   
-    halBoardInit();  
+    halBoardInit();     // 电路板的初始化
     
     if(halRfInit()==FAILED)      //初始化hal_rf
       HAL_ASSERT(FALSE);

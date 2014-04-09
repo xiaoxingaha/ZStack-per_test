@@ -54,10 +54,10 @@
 /***********************************************************************************
 * TYPEDEFS
 */
-
+// 基本配置数据类型
 typedef struct {
-    uint16 myAddr;        // 16位短地址（节点的地址）
-    uint16 panId;         // 节点的PAN ID
+    uint16 myAddr;        // 16位短地址（节点的地址），类似于局域网中的IP地址
+    uint16 panId;         // 节点的PAN ID，网络的ID号，可以理解成"局域网的外网IP地址"
     uint8 channel;        // RF通道，必须在11-26之间
     uint8 ackRequest;     // 目标确认就置 true
     #ifdef SECURITY_CCM   // 是否加密，预定义里取消了加密

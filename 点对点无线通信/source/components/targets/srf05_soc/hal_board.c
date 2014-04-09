@@ -49,11 +49,13 @@
 *
 * @return  none
 */
-
+// 电路板的初始化，主要初始化MCU，配置I/O及用户应用接口：LEDS、按键、joyStick、LCD
+// 其中，初始化MCU主要为两个时钟的初始化。
 void halBoardInit(void)
 {
-    halMcuInit();
+    halMcuInit();     // 初始化时钟
 
+    // 下面可以根据自己需要对LEDS、Buttons、joyStick、LCD代码段进行修改和删除
     // LEDs
     MCU_IO_OUTPUT(HAL_BOARD_IO_LED_1_PORT, HAL_BOARD_IO_LED_1_PIN, 0);
     MCU_IO_OUTPUT(HAL_BOARD_IO_LED_2_PORT, HAL_BOARD_IO_LED_2_PIN, 0);

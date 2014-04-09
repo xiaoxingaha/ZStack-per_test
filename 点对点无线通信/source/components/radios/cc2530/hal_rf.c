@@ -318,11 +318,30 @@ void halRfWriteTxBuf(uint8* pData, uint8 length)
 {
     uint8 i;
 
-    ISFLUSHTX();          // Making sure that the TX FIFO is empty.
+    // Making sure that the TX FIFO is empty.
+    // 确保发送队列为空
+    ISFLUSHTX();
 
+/********* RFIRQF1 (0x91) RF Interrupt Flags **************
+
+    Bit   Name   Reset     Description
+    1     TXDONE   0       A complete frame has been transmitted.
+                           0: No interrupt pending
+                           1: Interrupt pending
+*/
+    // 在未发送前，必须清发送中断标志位,no pending
+    // 其实，中断在发送的时候会自动设置成 pending;发送结束会自动设置成 no pending
     RFIRQF1 = ~IRQ_TXDONE;   // Clear TX done interrupt
 
+/****************************************************************************
+    The TXFIFO and RXFIFO may be accessed though the SFR register RFD (0xD9). 
+    Data is written to the TXFIFO when writing to the RFD register. 
+    Data is read from the RXFIFO when the RFD register is read.
+    The TXFIFO memory area is located at addresses 0x6080 to 0x60FF and is thus 128 bytes.
+*****************************************************************************/
     // Insert data
+    /* RFD寄存器只能存储8位一个字节，
+    所以应该是将MPDU数据一个字节一个字节写入到 TXFIFO中发送出去的。 */
     for(i=0;i<length;i++){
         RFD = pData[i];
     }
@@ -418,9 +437,20 @@ uint8 halRfTransmit(void)
 
     ISTXON(); // Sending
 
-    // Waiting for transmission to finish
-    while(!(RFIRQF1 & IRQ_TXDONE) );
+/********* RFIRQF1 (0x91) RF Interrupt Flags **************
 
+    Bit   Name   Reset     Description
+    1     TXDONE   0       A complete frame has been transmitted.
+                           0: No interrupt pending
+                           1: Interrupt pending
+*/
+    // Waiting for transmission to finish
+    // 直到全部发送成功才跳出循环
+    // 也就是发送结束，发送中断标志位自动置0,no pending
+    while(!(RFIRQF1 & IRQ_TXDONE) );
+    
+    // RFIRQF1：RF Interrupt Flags MSB 中断标志位
+    // IRQ_TXDONE：RF interrupt flags 中断标志
     RFIRQF1 = ~IRQ_TXDONE;
     status= SUCCESS;
 
@@ -490,7 +520,15 @@ void halRfDisableRxInterrupt(void)
 */
 void halRfEnableRxInterrupt(void)
 {
+/****************RFIRQF0 (0xE9) RF Interrupt Flags********************
+
+    Bit   Name       Reset   Description
+    6     RXPKTDONE    0     A complete frame has been received.
+                             0: No interrupt pending
+                             1: Interrupt pending
+*/
     // enable RXPKTDONE interrupt
+    // 使能接收中断标志位
     RFIRQM0 |= BV(6);
     // enable general RF interrupts
     IEN2 |= BV(0);
