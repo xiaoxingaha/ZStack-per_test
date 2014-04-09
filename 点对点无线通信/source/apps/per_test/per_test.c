@@ -165,7 +165,7 @@ static void appTransmitter()
     /* 初始化Basic RF */
     basicRfConfig.myAddr = TX_ADDR;     // 给节点地址赋值
     
-    // 射频电路初始化函数，传入上述的参数配置结构体
+    // 初始化 basicRF数据结构，传入上述的参数配置结构体
     if(basicRfInit(&basicRfConfig)==FAILED) 
     {
       HAL_ASSERT(FALSE);

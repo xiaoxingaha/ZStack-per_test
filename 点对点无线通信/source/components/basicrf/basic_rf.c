@@ -174,7 +174,7 @@ static uint8 basicRfBuildHeader(uint8* buffer, uint16 destAddr, uint8 payloadLen
 
     // 因为pHdr 为局部变量，但他又要影响到全局的变量 buffer，
     // 所以就将自己定义的局部帧头指针指向 全局的MPDU buffer 
-    pHdr= (basicRfPktHdr_t*)buffer;  // 帧头buffer 指向 MPDU buffer；
+    pHdr= (basicRfPktHdr_t*)buffer;  // 帧头buffer 指向 txMPDU buffer；
 
 /**************Populate packet header,将相关信息存至帧头buffer*******/
     // 帧头长度定义为:
@@ -689,7 +689,7 @@ uint8 basicRfReceive(uint8* pRxData, uint8 len, int16* pRssi)
     // Critical region start
     // 关闭中断
     halIntOff();
-    // memcpy函数被封装起来了，没法知道具体实现过程
+    // memcpy函数,拷贝n个字节
     // 实现的功能是将无线发送过来的 payload里的数据放到自己定义的 RxData中
     memcpy(pRxData, rxi.pPayload, min(rxi.length, len));
     // pRssi 信号强度的检测
